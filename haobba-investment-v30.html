@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>하오빠 투자클럽 V3.2 - 무료 실시간</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(52, 152, 219, 0.3);
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: #F5F7FA;
+            color: #1A2332;
+            font-size: 15px;
+            line-height: 1.5;
+            overscroll-behavior: none;
+        }
+
+        .container {
+            max-width: 100%;
+            min-height: 100vh;
+            background: #F5F7FA;
+        }
+
+        /* 헤더 */
+        .header {
+            background: linear-gradient(135deg, #2C3E50 0%, #3498DB 100%);
+            color: white;
+            padding: 20px 16px 16px 16px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .header .version {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .header .data-status {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 6px;
+        }
+
+        .status-live { background: #2ECC71; }
+        .status-static { background: #F39C12; }
+
+        .refresh-btn {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 공포탐욕 */
+        .fear-greed-fixed {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            padding: 12px 16px;
+            border-bottom: 2px solid #E8EBF3;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .fear-greed-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #4A5B75;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .fear-greed-bar {
+            position: relative;
+            height: 50px;
+            background: linear-gradient(to right, #E74C3C 0%, #F39C12 25%, #27AE60 50%, #F39C12 75%, #E74C3C 100%);
+            border-radius: 10px;
+            border: 2px solid #BDC3C7;
+            margin-bottom: 8px;
+        }
+
+        .fear-greed-pointer {
+            position: absolute;
+            width: 3px;
+            height: 100%;
+            background: #1A2332;
+            border-radius: 2px;
+            transition: left 0.5s ease;
+        }
+
+        .fear-greed-value {
+            position: absolute;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .fear-greed-action {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .action-buy { background: #D4EDDA; color: #155724; }
+        .action-hold { background: #FFF3CD; color: #856404; }
+        .action-sell { background: #F8D7DA; color: #721C24; }
+
+        /* 탭 */
+        .tabs-container {
+            background: white;
+            border-bottom: 2px solid #E8EBF3;
+            overflow-x: auto;
+            position: sticky;
+            top: 97px;
+            z-index: 99;
+        }
+
+        .tabs-scroll {
+            display: flex;
+            padding: 8px;
+            gap: 6px;
+        }
+
+        .tab {
+            flex: 0 0 auto;
+            padding: 10px 14px;
+            background: #F8F9FC;
+            border: 2px solid #E8EBF3;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4A5B75;
+            min-height: 44px;
+            user-select: none;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #3498DB 0%, #5DADE2 100%);
+            color: white;
+            border-color: #2980B9;
+        }
+
+        /* 섹션 */
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E8EBF3;
+        }
+
+        /* 컨텐츠 */
+        .content-area {
+            padding: 12px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 버튼 */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3498DB 0%, #5DADE2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 48px;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 인포박스 */
+        .info-box {
+            background: #FFF9E6;
+            border: 2px solid #F39C12;
+            border-left: 5px solid #F39C12;
+            border-radius: 8px;
+            padding: 14px;
+            margin: 12px 0;
+        }
+
+        .info-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #E67E22;
+            margin-bottom: 8px;
+        }
+
+        .info-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #7F8C8D;
+        }
+
+        .success-box {
+            background: #D4EDDA;
+            border-color: #28A745;
+        }
+
+        .success-box .info-title {
+            color: #155724;
+        }
+
+        .warning-box {
+            background: #FFE8E8;
+            border-color: #E74C3C;
+        }
+
+        .warning-box .info-title {
+            color: #C0392B;
+        }
+
+        /* API 상태 */
+        .api-status {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #E8EBF3;
+        }
+
+        .api-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #F8F9FC;
+        }
+
+        .api-item:last-child {
+            border-bottom: none;
+        }
+
+        .api-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .api-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-connected {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .badge-pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .badge-error {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <button class="refresh-btn" onclick="refreshAllData()">🔄 새로고침</button>
+            <h1>💼 하오빠 투자클럽</h1>
+            <p class="subtitle">손주부 투자법 + 무료 실시간 데이터</p>
+            <p class="version">V3.2 - Free Real-time Edition</p>
+            <p class="data-status" id="dataStatus">
+                API 연결 확인 중...
+            </p>
+        </div>
+
+        <!-- 공포탐욕 지수 -->
+        <div class="fear-greed-fixed">
+            <div class="fear-greed-title" id="fgTitle">
+                😱 공포와 탐욕 지수
+            </div>
+            <div class="fear-greed-bar">
+                <div id="fearGreedPointer" class="fear-greed-pointer" style="left: 50%;"></div>
+                <div class="fear-greed-value" id="fearGreedValue">--</div>
+            </div>
+            <div id="fearGreedAction" class="fear-greed-action action-hold">
+                데이터 로딩 중...
+            </div>
+        </div>
+
+        <!-- 탭 -->
+        <div class="tabs-container">
+            <div class="tabs-scroll">
+                <div class="tab active" onclick="switchTab(event, 'setup')">⚙️ 설정</div>
+                <div class="tab" onclick="switchTab(event, 'main')">🏆 투자법</div>
+                <div class="tab" onclick="switchTab(event, 'screener')">🎯 스크리너</div>
+            </div>
+        </div>
+
+        <!-- 컨텐츠 -->
+        <div class="content-area">
+            
+            <!-- ⚙️ 설정 -->
+            <div id="tab-setup" class="tab-content active">
+                <div class="section">
+                    <div class="section-title">⚙️ API 설정</div>
+                    
+                    <div class="warning-box">
+                        <div class="info-title">🚨 중요: API URL 입력 필수!</div>
+                        <div class="info-content">
+                            무료 실시간 데이터를 사용하려면 먼저 백엔드 서버를 배포하고<br>
+                            아래에 URL을 입력해야 합니다.
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 14px; font-weight: 600; color: #4A5B75; display: block; margin-bottom: 6px;">
+                            🌐 Vercel API URL
+                        </label>
+                        <input type="text" id="apiUrlInput" 
+                               style="width: 100%; padding: 12px; border: 2px solid #E8EBF3; border-radius: 8px; font-size: 14px;"
+                               placeholder="https://haobba-api-xxx.vercel.app"
+                               value="">
+                        <p style="font-size: 11px; color: #7F8C8D; margin-top: 4px;">
+                            예시: https://haobba-api-abc123.vercel.app
+                        </p>
+                    </div>
+
+                    <button class="btn" onclick="saveApiUrl()">
+                        💾 저장 및 연결 테스트
+                    </button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📊 API 연결 상태</div>
+                    
+                    <div class="api-status">
+                        <div class="api-item">
+                            <span class="api-label">공포탐욕 지수</span>
+                            <span id="fgApiStatus" class="api-badge badge-pending">대기중</span>
+                        </div>
+                        <div class="api-item">
+                            <span class="api-label">종목 데이터 (NVDA)</span>
+                            <span id="stockApiStatus" class="api-badge badge-pending">대기중</span>
+                        </div>
+                        <div class="api-item">
+                            <span class="api-label">오늘 API 사용</span>
+                            <span id="apiUsage" class="api-badge badge-pending">0/500</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-title">📚 백엔드 서버 만들기 (10분)</div>
+                    <div class="info-content">
+                        <strong>Step 1:</strong> GitHub에 haobba-api 저장소 생성<br>
+                        <strong>Step 2:</strong> 5개 파일 업로드 (코드 제공됨)<br>
+                        <strong>Step 3:</strong> Vercel에서 배포 (무료)<br>
+                        <strong>Step 4:</strong> URL을 위에 입력<br>
+                        <br>
+                        <strong style="color: #27AE60;">✅ 완전 무료 (500회/일)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🏆 투자법 -->
+            <div id="tab-main" class="tab-content">
+                <div class="section">
+                    <div class="section-title">🏆 손주부 투자법</div>
+                    
+                    <div class="success-box">
+                        <div class="info-title">✅ 이제 실시간 데이터 지원!</div>
+                        <div class="info-content">
+                            • 공포탐욕 지수: 실시간 (10분마다 자동)<br>
+                            • 주요 종목 PEG/ROE: 실시간 (하루 2회)<br>
+                            • 완전 무료 (Alpha Vantage 500회/일)
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">🎯 투자 3원칙</div>
+                        <div class="info-content">
+                            <strong>1. 싼 것을 사라</strong> - PEG < 1.0<br>
+                            <strong>2. 좋은 기업 보유</strong> - ROE > 15%<br>
+                            <strong>3. 공포할 때 매수</strong> - 지수 25 이하
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🎯 스크리너 -->
+            <div id="tab-screener" class="tab-content">
+                <div class="section">
+                    <div class="section-title">🎯 실시간 스크리너</div>
+                    
+                    <div class="info-box">
+                        <div class="info-title">🔄 데이터 갱신 전략</div>
+                        <div class="info-content">
+                            <strong>주요 20개 종목</strong> - 하루 2회 자동 갱신<br>
+                            <strong>나머지 180개</strong> - 정적 데이터 (2025.01.15)<br>
+                            <strong>무료 제한</strong> - 500회/일 (충분함!)
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="updateTopStocks()">
+                        📊 주요 종목 지금 갱신하기
+                    </button>
+
+                    <div id="stockResults" style="margin-top: 12px;">
+                        <!-- 결과 표시 -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // === 글로벌 설정 ===
+        let API_URL = localStorage.getItem('apiUrl') || '';
+        let apiCallCount = parseInt(localStorage.getItem('apiCallCount') || '0');
+        let lastResetDate = localStorage.getItem('lastResetDate') || new Date().toDateString();
+
+        // 날짜가 바뀌면 카운트 리셋
+        if (lastResetDate !== new Date().toDateString()) {
+            apiCallCount = 0;
+            localStorage.setItem('apiCallCount', '0');
+            localStorage.setItem('lastResetDate', new Date().toDateString());
+        }
+
+        // 주요 종목 20개 (실시간 갱신)
+        const TOP_STOCKS = [
+            'NVDA', 'META', 'GOOGL', 'MSFT', 'AAPL',
+            'AMZN', 'TSLA', 'AMD', 'TSM', 'AVGO',
+            'CRM', 'ORCL', 'JPM', 'V', 'MA',
+            'WMT', 'COST', 'JNJ', 'UNH', 'PFE'
+        ];
+
+        // === API URL 저장 ===
+        function saveApiUrl() {
+            const url = document.getElementById('apiUrlInput').value.trim();
+            
+            if (!url) {
+                alert('❌ URL을 입력해주세요!');
+                return;
+            }
+
+            if (!url.startsWith('http')) {
+                alert('❌ https://로 시작하는 URL을 입력해주세요!');
+                return;
+            }
+
+            API_URL = url.replace(/\/$/, ''); // 끝의 / 제거
+            localStorage.setItem('apiUrl', API_URL);
+            
+            alert('✅ API URL이 저장되었습니다!\n연결 테스트를 시작합니다...');
+            
+            testApiConnection();
+        }
+
+        // === API 연결 테스트 ===
+        async function testApiConnection() {
+            // 공포탐욕 테스트
+            try {
+                document.getElementById('fgApiStatus').textContent = '테스트중...';
+                document.getElementById('fgApiStatus').className = 'api-badge badge-pending';
+                
+                const response = await fetch(`${API_URL}/api/feargreed`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('fgApiStatus').textContent = '✅ 연결됨';
+                    document.getElementById('fgApiStatus').className = 'api-badge badge-connected';
+                    
+                    // 공포탐욕 지수 업데이트
+                    updateFearGreed(parseInt(data.data.value));
+                    
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                document.getElementById('fgApiStatus').textContent = '❌ 실패';
+                document.getElementById('fgApiStatus').className = 'api-badge badge-error';
+                console.error('공포탐욕 API 오류:', error);
+            }
+
+            // 종목 데이터 테스트
+            try {
+                document.getElementById('stockApiStatus').textContent = '테스트중...';
+                
+                const response = await fetch(`${API_URL}/api/stock?ticker=NVDA`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('stockApiStatus').textContent = '✅ 연결됨';
+                    document.getElementById('stockApiStatus').className = 'api-badge badge-connected';
+                    
+                    incrementApiCall();
+                    
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                document.getElementById('stockApiStatus').textContent = '❌ 실패';
+                document.getElementById('stockApiStatus').className = 'api-badge badge-error';
+                console.error('종목 데이터 API 오류:', error);
+            }
+
+            updateDataStatus();
+        }
+
+        // === API 호출 카운트 ===
+        function incrementApiCall() {
+            apiCallCount++;
+            localStorage.setItem('apiCallCount', apiCallCount.toString());
+            document.getElementById('apiUsage').textContent = `${apiCallCount}/500`;
+            
+            if (apiCallCount >= 500) {
+                document.getElementById('apiUsage').className = 'api-badge badge-error';
+                alert('⚠️ 오늘의 API 할당량을 모두 사용했습니다!\n내일 다시 사용할 수 있습니다.');
+            } else if (apiCallCount >= 400) {
+                document.getElementById('apiUsage').className = 'api-badge badge-pending';
+            } else {
+                document.getElementById('apiUsage').className = 'api-badge badge-connected';
+            }
+        }
+
+        // === 공포탐욕 지수 ===
+        async function fetchFearGreedIndex() {
+            if (!API_URL) {
+                console.log('⚠️ API URL이 설정되지 않았습니다');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/feargreed`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const value = parseInt(result.data.value);
+                    updateFearGreed(value);
+                    
+                    document.getElementById('fgTitle').innerHTML = `
+                        😱 공포와 탐욕 지수 <span style="color: #2ECC71; font-size: 11px;">● 실시간</span>
+                    `;
+                    
+                    console.log('✅ 공포탐욕 지수 갱신:', value);
+                }
+            } catch (error) {
+                console.error('❌ 공포탐욕 API 오류:', error);
+            }
+        }
+
+        function updateFearGreed(value) {
+            document.getElementById('fearGreedValue').textContent = value;
+            document.getElementById('fearGreedPointer').style.left = value + '%';
+            
+            const actionBox = document.getElementById('fearGreedAction');
+            if (value <= 25) {
+                actionBox.className = 'fear-greed-action action-buy';
+                actionBox.textContent = '🟢 강력 매수! (극공포 - 70-80% 비중)';
+            } else if (value <= 45) {
+                actionBox.className = 'fear-greed-action action-buy';
+                actionBox.textContent = '🟢 매수 타이밍! (공포 - 50-70% 비중)';
+            } else if (value <= 55) {
+                actionBox.className = 'fear-greed-action action-hold';
+                actionBox.textContent = '🟡 중립 (관망 - 30-50% 비중)';
+            } else if (value <= 75) {
+                actionBox.className = 'fear-greed-action action-hold';
+                actionBox.textContent = '🟡 주의 (탐욕 - 20-30% 비중)';
+            } else {
+                actionBox.className = 'fear-greed-action action-sell';
+                actionBox.textContent = '🔴 매도! (극탐욕 - 차익실현)';
+            }
+        }
+
+        // === 주요 종목 갱신 ===
+        async function updateTopStocks() {
+            if (!API_URL) {
+                alert('⚠️ 먼저 설정 탭에서 API URL을 입력해주세요!');
+                switchTab(null, 'setup');
+                return;
+            }
+
+            if (apiCallCount >= 500) {
+                alert('❌ 오늘의 API 할당량을 모두 사용했습니다!');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('stockResults');
+            resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #7F8C8D;">데이터 가져오는 중...</div>';
+
+            let results = [];
+            let successCount = 0;
+
+            for (let i = 0; i < Math.min(TOP_STOCKS.length, 500 - apiCallCount); i++) {
+                const ticker = TOP_STOCKS[i];
+                
+                try {
+                    const response = await fetch(`${API_URL}/api/stock?ticker=${ticker}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.data.peg) {
+                        results.push(data.data);
+                        successCount++;
+                        incrementApiCall();
+                        
+                        // 진행 상황 표시
+                        resultsDiv.innerHTML = `<div style="text-align: center; padding: 20px; color: #7F8C8D;">
+                            ${successCount}/${TOP_STOCKS.length} 완료...
+                        </div>`;
+                        
+                        // 과도한 API 호출 방지
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+                    }
+                } catch (error) {
+                    console.error(`${ticker} 오류:`, error);
+                }
+            }
+
+            // 결과 표시
+            results.sort((a, b) => parseFloat(a.peg) - parseFloat(b.peg));
+            
+            resultsDiv.innerHTML = `
+                <div class="success-box">
+                    <div class="info-title">✅ ${successCount}개 종목 갱신 완료!</div>
+                    <div class="info-content">
+                        API 사용: ${apiCallCount}/500
+                    </div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <strong>PEG 순위 TOP 10:</strong>
+                    ${results.slice(0, 10).map((stock, idx) => `
+                        <div style="padding: 8px; background: white; border: 1px solid #E8EBF3; border-radius: 6px; margin-top: 6px;">
+                            <strong>${idx + 1}. ${stock.ticker}</strong> - ${stock.name}<br>
+                            <span style="font-size: 13px; color: #7F8C8D;">
+                                PEG: <strong style="color: #27AE60;">${stock.peg}</strong> | 
+                                ROE: ${stock.roe?.toFixed(1)}% | 
+                                PER: ${stock.per?.toFixed(1)}
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // === 새로고침 ===
+        function refreshAllData() {
+            if (!API_URL) {
+                alert('⚠️ 먼저 API URL을 설정해주세요!');
+                switchTab(null, 'setup');
+                return;
+            }
+
+            fetchFearGreedIndex();
+            alert('✅ 공포탐욕 지수 갱신 완료!');
+        }
+
+        // === 탭 전환 ===
+        function switchTab(e, tabName) {
+            if (e) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+            
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // === 상태 업데이트 ===
+        function updateDataStatus() {
+            const status = document.getElementById('dataStatus');
+            if (API_URL) {
+                status.innerHTML = `✅ API 연결됨 | 사용: ${apiCallCount}/500`;
+            } else {
+                status.innerHTML = `⚠️ API URL 설정 필요 (설정 탭)`;
+            }
+        }
+
+        // === 초기화 ===
+        document.addEventListener('DOMContentLoaded', () => {
+            // API URL 복원
+            if (API_URL) {
+                document.getElementById('apiUrlInput').value = API_URL;
+                testApiConnection();
+                
+                // 10분마다 공포탐욕 자동 갱신
+                setInterval(fetchFearGreedIndex, 10 * 60 * 1000);
+            }
+
+            updateDataStatus();
+            document.getElementById('apiUsage').textContent = `${apiCallCount}/500`;
+
+            console.log('🚀 하오빠 투자클럽 V3.2 시작');
+            console.log('📊 API URL:', API_URL || '미설정');
+            console.log('📈 오늘 사용량:', apiCallCount, '/500');
+        });
+    </script>
+</body>
+</html>
