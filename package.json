@@ -1,0 +1,19 @@
+{
+  "name": "haobba-api",
+  "version": "1.0.0",
+  "description": "하오빠 투자클럽 API 서버 - 무료 실시간 데이터",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": ["haobba", "stock", "investment", "api"],
+  "author": "Haobba Investment Club",
+  "license": "MIT"
+}
